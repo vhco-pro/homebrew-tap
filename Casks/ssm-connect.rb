@@ -1,5 +1,5 @@
 cask "ssm-connect" do
-  version "0.0.9"
+  version "0.1.0"
   sha256 "e93b11631dda46de2fdc734f1befbcfcfd681fec82f214ecf3c206420c9e4e06"
 
   url "https://github.com/vhco-pro/ssm-connect/releases/download/v#{version}/SSMConnect-#{version}.zip"
