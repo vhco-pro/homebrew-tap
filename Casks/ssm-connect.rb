@@ -7,7 +7,7 @@ cask "ssm-connect" do
   desc "Menu-bar app that auto-establishes AWS SSM tunnels to EC2 workstations"
   homepage "https://github.com/vhco-pro/ssm-connect"
 
-  depends_on macos: ">= :sonoma"
+  depends_on macos: :sonoma
 
   app "SSMConnect.app"
 
