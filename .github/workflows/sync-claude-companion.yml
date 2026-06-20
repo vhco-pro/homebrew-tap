@@ -1,0 +1,35 @@
+# Watches vhco-pro/claude-companion releases and bumps this cask to match, using this repo's own
+# GITHUB_TOKEN (no cross-repo app/PAT/deploy-key needed). Runs on a schedule + on demand.
+name: Sync claude-companion cask
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Bump cask to the latest claude-companion release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="$(gh release view --repo vhco-pro/claude-companion --json tagName -q .tagName)"
+          VERSION="${TAG#v}"
+          CURRENT="$(grep -E '^[[:space:]]*version ' Casks/claude-companion.rb | sed -E 's/.*"(.*)".*/\1/')"
+          if [ "$VERSION" = "$CURRENT" ]; then echo "cask already at $VERSION"; exit 0; fi
+          echo "bumping cask $CURRENT -> $VERSION"
+          curl -fsSL -o app.zip "https://github.com/vhco-pro/claude-companion/releases/download/${TAG}/ClaudeCompanion-${VERSION}.zip"
+          SHA="$(sha256sum app.zip | cut -d' ' -f1)"; rm -f app.zip
+          sed -i -E "s/^([[:space:]]*version )\".*\"/\1\"${VERSION}\"/" Casks/claude-companion.rb
+          sed -i -E "s/^([[:space:]]*sha256 )\".*\"/\1\"${SHA}\"/" Casks/claude-companion.rb
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "claude-companion ${VERSION}"
+          git push
