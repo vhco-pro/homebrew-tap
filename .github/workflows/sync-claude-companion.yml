@@ -1,11 +1,13 @@
-# Watches vhco-pro/claude-companion releases and bumps this cask to match, using this repo's own
-# GITHUB_TOKEN (no cross-repo app/PAT/deploy-key needed). Runs on a schedule + on demand.
+# Bumps this cask to match the latest vhco-pro/claude-companion release.
+# Primary trigger is event-driven: the claude-companion release workflow fires workflow_dispatch
+# here (the instant a release publishes) via the vhco-release-bot GitHub App. The daily cron is a
+# self-healing backstop in case a dispatch is ever missed. Both run on this repo's own GITHUB_TOKEN.
 name: Sync claude-companion cask
 
 on:
-  schedule:
-    - cron: '*/30 * * * *'
   workflow_dispatch:
+  schedule:
+    - cron: '17 9 * * *'   # daily backstop only (event-driven dispatch handles the fast path)
 
 permissions:
   contents: write
