@@ -1,6 +1,6 @@
 cask "claude-companion" do
-  version "0.4.0"
-  sha256 "c864c03bb785aa38432d9ae35a0aacc025822e2e1572b530b7c28c5f21c979ab"
+  version "0.5.0"
+  sha256 "69176b3f4b84f136498b3cfb814d1f24ac7af59920c3c5c8c2d3e9cd8f3f4e0b"
 
   url "https://github.com/vhco-pro/claude-companion/releases/download/v#{version}/ClaudeCompanion-#{version}.zip"
   name "Claude Companion"
