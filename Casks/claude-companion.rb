@@ -11,13 +11,20 @@ cask "claude-companion" do
 
   app "ClaudeCompanion.app"
 
+  # The app is ad-hoc signed (not notarized), so a quarantined copy is hard-blocked by Gatekeeper
+  # ("cannot be verified - move to Trash"), and the companion-hook copied out of the bundle inherits
+  # the quarantine bit and gets killed when Claude Code runs it. Strip quarantine right after install
+  # so the app launches and the gate runs without any manual `xattr` step.
+  postflight do
+    system_command "/usr/bin/xattr",
+                   args: ["-dr", "com.apple.quarantine", "#{appdir}/ClaudeCompanion.app"]
+  end
+
   caveats <<~EOS
-    Claude Companion is ad-hoc signed (not notarized). On first launch macOS Gatekeeper
-    will block it. Approve it once with:
+    Claude Companion is ad-hoc signed (not notarized). This cask strips the download
+    quarantine automatically on install. If macOS still blocks it, run:
 
       xattr -dr com.apple.quarantine "#{appdir}/ClaudeCompanion.app"
-
-    or right-click the app in Finder and choose Open.
 
     The headline auto-approve gate installs a Claude Code hook from inside the app
     (a button in the popover), then reload your editor window to activate it.
