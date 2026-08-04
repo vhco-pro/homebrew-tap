@@ -1,0 +1,59 @@
+# Watches vhco-pro/postbode releases and bumps this formula to match — using
+# this repo's own GITHUB_TOKEN (no cross-repo app/PAT/deploy-key needed), the
+# same pull-based pattern as sync-cask.yml. Runs on a schedule + on demand.
+name: Sync postbode formula
+
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Bump formula to the latest postbode release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="$(gh release view --repo vhco-pro/postbode --json tagName -q .tagName)"
+          # postbode uses GitVersion with tag-prefix: '' — tags are 0.1.0, not
+          # v0.1.0 — but strip a leading v anyway so a future convention change
+          # cannot silently produce a formula pointing at a nonexistent asset.
+          VERSION="${TAG#v}"
+          CURRENT="$(grep -E '^[[:space:]]*version ' Formula/postbode.rb | sed -E 's/.*"(.*)".*/\1/')"
+          if [ "$VERSION" = "$CURRENT" ]; then echo "formula already at $VERSION"; exit 0; fi
+          echo "bumping formula $CURRENT -> $VERSION"
+
+          # Resolve each asset from the release rather than assuming a name:
+          # a goreleaser name_template change would otherwise produce a
+          # formula that installs a 404 and only fails at `brew install`.
+          for arch in arm64 amd64; do
+            ASSET="$(gh release view "$TAG" --repo vhco-pro/postbode \
+              --json assets -q ".assets[].name" | grep -E "darwin_${arch}\.zip$" | head -1)"
+            if [ -z "$ASSET" ]; then
+              echo "::error::no darwin_${arch} asset in release $TAG — refusing to write a broken formula"
+              exit 1
+            fi
+            gh release download "$TAG" --repo vhco-pro/postbode --pattern "$ASSET" --output "$arch.zip" --clobber
+            SHA="$(sha256sum "$arch.zip" | cut -d' ' -f1)"
+            rm -f "$arch.zip"
+            if [ "$arch" = "arm64" ]; then ARM_SHA="$SHA"; else INTEL_SHA="$SHA"; fi
+          done
+
+          sed -i -E "s/^([[:space:]]*version )\".*\"/\1\"${VERSION}\"/" Formula/postbode.rb
+          # Two sha256 lines, arm first then intel — replace them positionally.
+          awk -v arm="$ARM_SHA" -v intel="$INTEL_SHA" '
+            /^[[:space:]]*sha256 / { n++; if (n==1) sub(/"[^"]*"/, "\"" arm "\""); else if (n==2) sub(/"[^"]*"/, "\"" intel "\"") }
+            { print }
+          ' Formula/postbode.rb > .tmp && mv .tmp Formula/postbode.rb
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -am "postbode ${VERSION}"
+          git push
