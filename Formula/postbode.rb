@@ -20,6 +20,14 @@ class Postbode < Formula
     end
   end
 
+  # Notifications go through terminal-notifier so clicking one opens the
+  # review queue. The osascript fallback posts notifications *as Script
+  # Editor* — macOS attributes the click to the posting app, so its "Show"
+  # button opens Script Editor, which reads as broken. postbode degrades to
+  # osascript when this is absent, so this is about the experience, not
+  # about working at all.
+  depends_on "terminal-notifier"
+
   def install
     bin.install "postbode"
   end
