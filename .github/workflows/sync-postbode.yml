@@ -22,9 +22,8 @@ jobs:
         run: |
           set -euo pipefail
           TAG="$(gh release view --repo vhco-pro/postbode --json tagName -q .tagName)"
-          # postbode uses GitVersion with tag-prefix: '' — tags are 0.1.0, not
-          # v0.1.0 — but strip a leading v anyway so a future convention change
-          # cannot silently produce a formula pointing at a nonexistent asset.
+          # Releases up to 0.6.2 are tagged without a v, later ones with it.
+          # The formula version never has the v; the download URL needs the tag.
           VERSION="${TAG#v}"
           CURRENT="$(grep -E '^[[:space:]]*version ' Formula/postbode.rb | sed -E 's/.*"(.*)".*/\1/')"
           if [ "$VERSION" = "$CURRENT" ]; then echo "formula already at $VERSION"; exit 0; fi
@@ -47,6 +46,10 @@ jobs:
           done
 
           sed -i -E "s/^([[:space:]]*version )\".*\"/\1\"${VERSION}\"/" Formula/postbode.rb
+          # First v-tagged release: point the URLs at v#{version}. No-op afterwards.
+          if [[ "$TAG" == v* ]]; then
+            sed -i 's|releases/download/#{version}/|releases/download/v#{version}/|' Formula/postbode.rb
+          fi
           # Two sha256 lines, arm first then intel — replace them positionally.
           awk -v arm="$ARM_SHA" -v intel="$INTEL_SHA" '
             /^[[:space:]]*sha256 / { n++; if (n==1) sub(/"[^"]*"/, "\"" arm "\""); else if (n==2) sub(/"[^"]*"/, "\"" intel "\"") }
