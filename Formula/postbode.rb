@@ -1,7 +1,7 @@
 class Postbode < Formula
   desc "Gmail to ClearFacts/QPS purchase-invoice agent (macOS launchd daemon)"
   homepage "https://github.com/vhco-pro/postbode"
-  version "0.6.2"
+  version "0.6.3"
 
   # Bumped automatically by .github/workflows/sync-postbode.yml, which reads
   # the latest vhco-pro/postbode release. Do not edit version/sha256 by hand.
@@ -11,12 +11,12 @@ class Postbode < Formula
   # LaunchAgent. There is no Linux build to point at.
   on_macos do
     on_arm do
-      url "https://github.com/vhco-pro/postbode/releases/download/#{version}/postbode_#{version}_darwin_arm64.zip"
-      sha256 "24939ce4fa4dda46ad638c92f22ad6174df681b7bcbff1a4a65ab15949de089c"
+      url "https://github.com/vhco-pro/postbode/releases/download/v#{version}/postbode_#{version}_darwin_arm64.zip"
+      sha256 "07e6954cf30c9ec72fa9172b1988781923abc68d16987d30c971976cef54d320"
     end
     on_intel do
-      url "https://github.com/vhco-pro/postbode/releases/download/#{version}/postbode_#{version}_darwin_amd64.zip"
-      sha256 "2e3d6b2070c66b7835ee803cca5dfb091687fbd350ca1a0740a4f528d50ff97b"
+      url "https://github.com/vhco-pro/postbode/releases/download/v#{version}/postbode_#{version}_darwin_amd64.zip"
+      sha256 "8d4bf36d47402fecc22b430f373c58cc82e2139f819effc367e4c1895e617de0"
     end
   end
 
